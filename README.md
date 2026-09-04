@@ -4,3 +4,4 @@ Utilitário para instalação de programas, nele estão presentes processos de i
 - Zoiper
 - Anydesk
 - Microsip
+- Flameshot
