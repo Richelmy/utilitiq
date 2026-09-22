@@ -6,6 +6,8 @@ SENHA_DESTRUICAO="nuke"
 DESTINO="/usr/local/bin/utilitiq"
 RODAPE_TXT="\n\n*github.com/Richelmy*"
 
+URL_SCRIPT_REMOTO="https://raw.githubusercontent.com/Richelmy/utilitiq/main/utilitiq.sh"
+
 if ! command -v whiptail &> /dev/null; then
     echo "Instalando dependência (whiptail)..."
     sudo apt update && sudo apt install -y whiptail
@@ -23,6 +25,38 @@ if [ "$0" != "$DESTINO" ]; then
     exec "$DESTINO"
     exit 0
 fi
+
+verificar_atualizacao() {
+    if command -v curl &> /dev/null || command -v wget &> /dev/null; then
+        echo "Verificando se há atualizações do utilitiq..."
+        TMP_SCRIPT="/tmp/utilitiq_remote.sh"
+        
+        if command -v curl &> /dev/null; then
+            curl -sSL "$URL_SCRIPT_REMOTO" -o "$TMP_SCRIPT"
+        else
+            wget -qO "$TMP_SCRIPT" "$URL_SCRIPT_REMOTO"
+        fi
+
+        if [ -s "$TMP_SCRIPT" ]; then
+            HASH_LOCAL=$(md5sum "$DESTINO" | awk '{print $1}')
+            HASH_REMOTO=$(md5sum "$TMP_SCRIPT" | awk '{print $1}')
+
+            if [ "$HASH_LOCAL" != "$HASH_REMOTO" ]; then
+                echo "Nova atualização encontrada no repositório! Atualizando..."
+                sudo cp "$TMP_SCRIPT" "$DESTINO"
+                sudo chmod 755 "$DESTINO"
+                rm -f "$TMP_SCRIPT"
+                echo "Atualização concluída! Reiniciando..."
+                sleep 2
+                exec "$DESTINO"
+                exit 0
+            fi
+        fi
+        rm -f "$TMP_SCRIPT" 2>/dev/null
+    fi
+}
+
+verificar_atualizacao
 
 autenticar() {
     SENHA=$(whiptail --passwordbox "Digite a senha de acesso:$RODAPE_TXT" 10 50 --title "Autenticação" 3>&1 1>&2 2>&3)
@@ -48,7 +82,6 @@ autenticar
 USER_HOME=$(eval echo "~${SUDO_USER:-$USER}")
 DOWNLOADS_DIR="$USER_HOME/Downloads"
 
-# --- SUBMENU: INSTALAÇÃO ---
 menu_instalacao() {
     while true; do
         OPCAO_INST=$(whiptail --title "Menu de Instalação" --menu "Escolha o programa para instalar:$RODAPE_TXT" 22 65 11 \
@@ -95,10 +128,31 @@ menu_instalacao() {
             3)
                 clear
                 echo "Iniciando a instalação do MicroSIP via Wine..."
+                sudo dpkg --add-architecture i386
                 sudo apt update
-                sudo apt install -y wine wget
-                wget https://www.microsip.org/download/MicroSIP-3.21.3.exe -O microsip.exe
-                wine microsip.exe
+                sudo apt install -y wine wine32 wget unzip
+
+                echo "Baixando o instalador padrão do MicroSIP..."
+                if wget --timeout=15 --tries=2 https://www.microsip.org/download/MicroSIP-3.21.3.exe -O microsip.exe; then
+                    echo "Instalador baixado com sucesso. Executando..."
+                    wine microsip.exe
+                else
+                    echo " [!] Falha ao baixar o instalador padrão. Tentando baixar a versão Portable..."
+                    rm -f microsip.exe
+
+                    if wget --timeout=15 --tries=2 https://www.microsip.org/download/MicroSIP-3.21.3.zip -O microsip_portable.zip; then
+                        echo "Versão Portable baixada com sucesso! Extraindo..."
+                        MICROSIP_DIR="$USER_HOME/.microsip"
+                        mkdir -p "$MICROSIP_DIR"
+                        unzip -o microsip_portable.zip -d "$MICROSIP_DIR"
+                        rm -f microsip_portable.zip
+
+                        echo "Iniciando MicroSIP Portable via Wine..."
+                        wine "$MICROSIP_DIR/microsip.exe" &
+                    else
+                        echo " [X] Erro crítico: Não foi possível baixar nenhuma versão do MicroSIP."
+                    fi
+                fi
                 read -p "Pressione ENTER para voltar..."
                 ;;
             4)
@@ -163,7 +217,6 @@ menu_instalacao() {
     done
 }
 
-# --- SUBMENU: DESINSTALAÇÃO ---
 menu_desinstalacao() {
     while true; do
         OPCAO_DES=$(whiptail --title "Menu de Desinstalação" --menu "Escolha o programa para desinstalar:$RODAPE_TXT" 22 65 12 \
@@ -201,7 +254,8 @@ menu_desinstalacao() {
             3)
                 clear
                 echo "Removendo resquícios do MicroSIP..."
-                rm -f microsip.exe
+                rm -f microsip.exe microsip_portable.zip
+                rm -rf "$USER_HOME/.microsip"
                 rm -rf "$USER_HOME/.wine/drive_c/Program Files/MicroSIP"
                 echo "Arquivos do MicroSIP removidos."
                 read -p "Pressione ENTER para voltar..."
@@ -269,7 +323,6 @@ menu_desinstalacao() {
     done
 }
 
-# --- SUBMENU: UTILITÁRIOS PARA ATENDIMENTOS ---
 menu_utilitarios() {
     while true; do
         OPCAO_UTIL=$(whiptail --title "Utilitários para Atendimentos" --menu "Escolha uma opção:$RODAPE_TXT" 18 60 2 \
@@ -294,7 +347,6 @@ menu_utilitarios() {
     done
 }
 
-# --- MENU PRINCIPAL ---
 while true; do
     ACAO=$(whiptail --title "Painel Principal" --menu "O que você deseja fazer?$RODAPE_TXT" 18 60 4 \
         "1" "Instalar Programas" \
