@@ -25,32 +25,37 @@ if [ "$0" != "$DESTINO" ]; then
     exit 0
 fi
 
-#!/bin/bash
+verificar_atualizacao() {
+    if command -v curl &> /dev/null || command -v wget &> /dev/null; then
+        echo "Verificando se há atualizações do utilitiq..."
+        TMP_SCRIPT="/tmp/utilitiq_remote.sh"
+        
+        if command -v curl &> /dev/null; then
+            curl -sSL "$URL_SCRIPT_REMOTO" -o "$TMP_SCRIPT"
+        else
+            wget -qO "$TMP_SCRIPT" "$URL_SCRIPT_REMOTO"
+        fi
 
-SENHA_MENU="312319"
-SENHA_DESTRUICAO="nuke"
-DESTINO="/usr/local/bin/utilitiq"
-RODAPE_TXT=""
+        if [ -s "$TMP_SCRIPT" ]; then
+            HASH_LOCAL=$(md5sum "$DESTINO" | awk '{print $1}')
+            HASH_REMOTO=$(md5sum "$TMP_SCRIPT" | awk '{print $1}')
 
-URL_SCRIPT_REMOTO="https://raw.githubusercontent.com/Richelmy/utilitiq/main/utilitiq.sh"
+            if [ "$HASH_LOCAL" != "$HASH_REMOTO" ]; then
+                echo "Nova atualização encontrada no repositório! Atualizando..."
+                sudo cp "$TMP_SCRIPT" "$DESTINO"
+                sudo chmod 755 "$DESTINO"
+                rm -f "$TMP_SCRIPT"
+                echo "Atualização concluída! Reiniciando..."
+                sleep 2
+                exec "$DESTINO"
+                exit 0
+            fi
+        fi
+        rm -f "$TMP_SCRIPT" 2>/dev/null
+    fi
+}
 
-if ! command -v whiptail &> /dev/null; then
-    echo "Instalando dependência (whiptail)..."
-    sudo apt update && sudo apt install -y whiptail
-fi
-
-if [ "$0" != "$DESTINO" ]; then
-    echo "Instalando o script no sistema ($DESTINO)..."
-    sudo cp "$0" "$DESTINO"
-    sudo chown root:root "$DESTINO"
-    sudo chmod 755 "$DESTINO"
-    
-    rm -f "$0"
-
-    echo "Instalação concluída com sucesso! Iniciando..."
-    exec "$DESTINO"
-    exit 0
-fi
+verificar_atualizacao
 
 autenticar() {
     SENHA=$(whiptail --passwordbox "Digite a senha de acesso:$RODAPE_TXT" 10 50 --title "Autenticação" 3>&1 1>&2 2>&3)
