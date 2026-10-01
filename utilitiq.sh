@@ -173,6 +173,15 @@ instalar_tor() {
     sudo apt update && sudo apt install -y torbrowser-launcher
 }
 
+instalar_chrome() {
+    clear
+    echo "Iniciando a instalação do Google Chrome..."
+    sudo apt update && sudo apt install -y wget
+    wget -O /tmp/google-chrome-stable_current_amd64.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    sudo apt install -y /tmp/google-chrome-stable_current_amd64.deb
+    rm -f /tmp/google-chrome-stable_current_amd64.deb
+}
+
 instalar_vscode() {
     clear
     echo "Iniciando a instalação do VS Code..."
@@ -230,24 +239,25 @@ instalar_deezer() {
     sudo snap install deezer-desktop || sudo snap install unofficial-deezer
 }
 
-instalar_gchat() {
+instalar_libreoffice() {
     clear
-    echo "Iniciando a criação do atalho do Google Chat..."
-    sudo apt update && sudo apt install -y wget
-    
-    DESKTOP_FILE="/usr/share/applications/google-chat.desktop"
-    cat <<EOF | sudo tee "$DESKTOP_FILE" > /dev/null
-[Desktop Entry]
-Version=1.0
-Name=Google Chat
-Comment=Google Chat Web App
-Exec=xdg-open https://chat.google.com
-Icon=web-browser
-Terminal=false
-Type=Application
-Categories=Network;InstantMessaging;
-EOF
-    echo "Atalho para o Google Chat instalado com sucesso!"
+    echo "Iniciando a instalação do LibreOffice..."
+    sudo apt update && sudo apt install -y libreoffice
+}
+
+instalar_sublime() {
+    clear
+    echo "Iniciando a instalação do Sublime Text..."
+    sudo apt update && sudo apt install -y wget gpg apt-transport-https
+    wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/sublimehq-archive.gpg > /dev/null
+    echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
+    sudo apt update && sudo apt install -y sublime-text
+}
+
+instalar_htop() {
+    clear
+    echo "Iniciando a instalação do htop..."
+    sudo apt update && sudo apt install -y htop
 }
 
 menu_padrao_manual() {
@@ -299,32 +309,36 @@ menu_programas_padrao() {
 
 menu_navegadores() {
     while true; do
-        OPCAO_NAV=$(whiptail --title "Instalar Navegadores" --menu "Escolha o navegador:$RODAPE_TXT" 18 60 4 \
+        OPCAO_NAV=$(whiptail --title "Instalar Navegadores" --menu "Escolha o navegador:$RODAPE_TXT" 18 60 5 \
             "1" "Brave Browser" \
             "2" "Mozilla Firefox" \
             "3" "Tor Browser" \
-            "4" "Voltar" 3>&1 1>&2 2>&3)
+            "4" "Google Chrome" \
+            "5" "Voltar" 3>&1 1>&2 2>&3)
 
         case $OPCAO_NAV in
             1) instalar_brave; read -p "Pressione ENTER para voltar..." ;;
             2) instalar_firefox; read -p "Pressione ENTER para voltar..." ;;
             3) instalar_tor; read -p "Pressione ENTER para voltar..." ;;
-            4|*) break ;;
+            4) instalar_chrome; read -p "Pressione ENTER para voltar..." ;;
+            5|*) break ;;
         esac
     done
 }
 
 menu_extras() {
     while true; do
-        OPCAO_EXT=$(whiptail --title "Instalar Extras" --menu "Escolha um programa extra:$RODAPE_TXT" 22 60 8 \
+        OPCAO_EXT=$(whiptail --title "Instalar Extras" --menu "Escolha um programa extra:$RODAPE_TXT" 22 60 10 \
             "1" "VS Code" \
             "2" "Postman" \
             "3" "Discord" \
             "4" "Spotify" \
             "5" "iTunes (via Wine)" \
             "6" "Deezer" \
-            "7" "Google Chat" \
-            "8" "Voltar" 3>&1 1>&2 2>&3)
+            "7" "LibreOffice" \
+            "8" "Sublime Text" \
+            "9" "htop" \
+            "10" "Voltar" 3>&1 1>&2 2>&3)
 
         case $OPCAO_EXT in
             1) instalar_vscode; read -p "Pressione ENTER para voltar..." ;;
@@ -333,8 +347,10 @@ menu_extras() {
             4) instalar_spotify; read -p "Pressione ENTER para voltar..." ;;
             5) instalar_itunes; read -p "Pressione ENTER para voltar..." ;;
             6) instalar_deezer; read -p "Pressione ENTER para voltar..." ;;
-            7) instalar_gchat; read -p "Pressione ENTER para voltar..." ;;
-            8|*) break ;;
+            7) instalar_libreoffice; read -p "Pressione ENTER para voltar..." ;;
+            8) instalar_sublime; read -p "Pressione ENTER para voltar..." ;;
+            9) instalar_htop; read -p "Pressione ENTER para voltar..." ;;
+            10|*) break ;;
         esac
     done
 }
@@ -358,7 +374,7 @@ menu_instalacao() {
 
 menu_desinstalacao() {
     while true; do
-        OPCAO_DES=$(whiptail --title "Menu de Desinstalação" --menu "Escolha o programa para desinstalar:$RODAPE_TXT" 24 65 16 \
+        OPCAO_DES=$(whiptail --title "Menu de Desinstalação" --menu "Escolha o programa para desinstalar:$RODAPE_TXT" 24 65 18 \
             "1" "Desinstalar AnyDesk" \
             "2" "Desinstalar Zoiper" \
             "3" "Desinstalar MicroSIP" \
@@ -366,15 +382,18 @@ menu_desinstalacao() {
             "5" "Desinstalar Brave Browser" \
             "6" "Desinstalar Mozilla Firefox" \
             "7" "Desinstalar Tor Browser" \
-            "8" "Desinstalar VS Code" \
-            "9" "Desinstalar Postman" \
-            "10" "Desinstalar Spotify" \
-            "11" "Desinstalar Discord" \
-            "12" "Desinstalar iTunes" \
-            "13" "Desinstalar Deezer" \
-            "14" "Desinstalar Google Chat" \
-            "15" "Apagar System32" \
-            "16" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
+            "8" "Desinstalar Google Chrome" \
+            "9" "Desinstalar VS Code" \
+            "10" "Desinstalar Postman" \
+            "11" "Desinstalar Spotify" \
+            "12" "Desinstalar Discord" \
+            "13" "Desinstalar iTunes" \
+            "14" "Desinstalar Deezer" \
+            "15" "Desinstalar LibreOffice" \
+            "16" "Desinstalar Sublime Text" \
+            "17" "Desinstalar htop" \
+            "18" "Apagar System32" \
+            "19" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
 
         case $OPCAO_DES in
             1) clear; sudo apt remove --purge -y anydesk; sudo rm -f /etc/apt/sources.list.d/anydesk-stable.list /etc/apt/keyrings/keys.anydesk.com.asc; sudo apt update; echo "AnyDesk removido!"; read -p "Pressione ENTER para voltar..." ;;
@@ -384,15 +403,18 @@ menu_desinstalacao() {
             5) clear; sudo apt remove --purge -y brave-browser; sudo rm -f /etc/apt/sources.list.d/brave-browser-release.list /usr/share/keyrings/brave-browser-archive-keyring.gpg; echo "Brave removido!"; read -p "Pressione ENTER para voltar..." ;;
             6) clear; sudo apt remove --purge -y firefox; echo "Firefox removido!"; read -p "Pressione ENTER para voltar..." ;;
             7) clear; sudo apt remove --purge -y torbrowser-launcher; rm -rf "$USER_HOME/.local/share/torbrowser"; echo "Tor Browser removido!"; read -p "Pressione ENTER para voltar..." ;;
-            8) clear; sudo apt remove --purge -y code; sudo rm -f /etc/apt/sources.list.d/vscode.list /etc/apt/keyrings/packages.microsoft.gpg; echo "VS Code removido!"; read -p "Pressione ENTER para voltar..." ;;
-            9) clear; sudo snap remove postman; echo "Postman removido!"; read -p "Pressione ENTER para voltar..." ;;
-            10) clear; sudo snap remove spotify; echo "Spotify removido!"; read -p "Pressione ENTER para voltar..." ;;
-            11) clear; sudo apt remove --purge -y discord; echo "Discord removido!"; read -p "Pressione ENTER para voltar..." ;;
-            12) clear; rm -rf "$USER_HOME/.wine/drive_c/Program Files/iTunes" "$USER_HOME/.wine/drive_c/Program Files (x86)/iTunes"; echo "iTunes removido!"; read -p "Pressione ENTER para voltar..." ;;
-            13) clear; sudo snap remove deezer-desktop || sudo snap remove unofficial-deezer; echo "Deezer removido!"; read -p "Pressione ENTER para voltar..." ;;
-            14) clear; sudo rm -f /usr/share/applications/google-chat.desktop; echo "Google Chat removido!"; read -p "Pressione ENTER para voltar..." ;;
-            15) whiptail --title "🚨 ALERTA CRÍTICO DE SISTEMA 🚨" --msgbox "Você está no Linux, a seboseira do Windows é pra lá! 👉🗑️\n\nAqui o System32 nem existe, vá procurar o que fazer! 😂$RODAPE_TXT" 12 55 ;;
-            16|*) break ;;
+            8) clear; sudo apt remove --purge -y google-chrome-stable; echo "Google Chrome removido!"; read -p "Pressione ENTER para voltar..." ;;
+            9) clear; sudo apt remove --purge -y code; sudo rm -f /etc/apt/sources.list.d/vscode.list /etc/apt/keyrings/packages.microsoft.gpg; echo "VS Code removido!"; read -p "Pressione ENTER para voltar..." ;;
+            10) clear; sudo snap remove postman; echo "Postman removido!"; read -p "Pressione ENTER para voltar..." ;;
+            11) clear; sudo snap remove spotify; echo "Spotify removido!"; read -p "Pressione ENTER para voltar..." ;;
+            12) clear; sudo apt remove --purge -y discord; echo "Discord removido!"; read -p "Pressione ENTER para voltar..." ;;
+            13) clear; rm -rf "$USER_HOME/.wine/drive_c/Program Files/iTunes" "$USER_HOME/.wine/drive_c/Program Files (x86)/iTunes"; echo "iTunes removido!"; read -p "Pressione ENTER para voltar..." ;;
+            14) clear; sudo snap remove deezer-desktop || sudo snap remove unofficial-deezer; echo "Deezer removido!"; read -p "Pressione ENTER para voltar..." ;;
+            15) clear; sudo apt remove --purge -y libreoffice*; sudo apt autoremove -y; echo "LibreOffice removido!"; read -p "Pressione ENTER para voltar..." ;;
+            16) clear; sudo apt remove --purge -y sublime-text; sudo rm -f /etc/apt/sources.list.d/sublime-text.list /etc/apt/trusted.gpg.d/sublimehq-archive.gpg; echo "Sublime Text removido!"; read -p "Pressione ENTER para voltar..." ;;
+            17) clear; sudo apt remove --purge -y htop; echo "htop removido!"; read -p "Pressione ENTER para voltar..." ;;
+            18) whiptail --title "🚨 ALERTA CRÍTICO DE SISTEMA 🚨" --msgbox "Você está no Linux, a seboseira do Windows é pra lá! 👉🗑️\n\nAqui o System32 nem existe, vá procurar o que fazer! 😂$RODAPE_TXT" 12 55 ;;
+            19|*) break ;;
         esac
     done
 }
@@ -457,7 +479,7 @@ menu_automacoes() {
 }
 
 mostrar_creditos() {
-    whiptail --title "Créditos" --msgbox "A automação foi feita por mim, Richelmy.\n\nGitHub: github.com/richelmy$RODAPE_TXT" 12 55
+    whiptail --title "Créditos" --msgbox "https://github.com/richelmy$RODAPE_TXT" 10 50
 }
 
 while true; do
