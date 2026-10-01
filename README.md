@@ -5,3 +5,5 @@ Utilitário para instalação de programas, nele estão presentes processos de i
 - Anydesk
 - Microsip
 - Flameshot
+
+E muitos outros.
