@@ -260,6 +260,18 @@ instalar_htop() {
     sudo apt update && sudo apt install -y htop
 }
 
+instalar_vlc() {
+    clear
+    echo "Iniciando a instalação do VLC Media Player..."
+    sudo apt update && sudo apt install -y vlc
+}
+
+instalar_gimp() {
+    clear
+    echo "Iniciando a instalação do GIMP..."
+    sudo apt update && sudo apt install -y gimp
+}
+
 menu_padrao_manual() {
     while true; do
         OPCAO_MANUAL=$(whiptail --title "Programas Padrão - Manual" --menu "Escolha o programa para instalar:$RODAPE_TXT" 18 60 5 \
@@ -328,7 +340,7 @@ menu_navegadores() {
 
 menu_extras() {
     while true; do
-        OPCAO_EXT=$(whiptail --title "Instalar Extras" --menu "Escolha um programa extra:$RODAPE_TXT" 22 60 10 \
+        OPCAO_EXT=$(whiptail --title "Instalar Extras" --menu "Escolha um programa extra:$RODAPE_TXT" 24 60 12 \
             "1" "VS Code" \
             "2" "Postman" \
             "3" "Discord" \
@@ -338,7 +350,9 @@ menu_extras() {
             "7" "LibreOffice" \
             "8" "Sublime Text" \
             "9" "htop" \
-            "10" "Voltar" 3>&1 1>&2 2>&3)
+            "10" "VLC Media Player" \
+            "11" "GIMP" \
+            "12" "Voltar" 3>&1 1>&2 2>&3)
 
         case $OPCAO_EXT in
             1) instalar_vscode; read -p "Pressione ENTER para voltar..." ;;
@@ -350,7 +364,9 @@ menu_extras() {
             7) instalar_libreoffice; read -p "Pressione ENTER para voltar..." ;;
             8) instalar_sublime; read -p "Pressione ENTER para voltar..." ;;
             9) instalar_htop; read -p "Pressione ENTER para voltar..." ;;
-            10|*) break ;;
+            10) instalar_vlc; read -p "Pressione ENTER para voltar..." ;;
+            11) instalar_gimp; read -p "Pressione ENTER para voltar..." ;;
+            12|*) break ;;
         esac
     done
 }
@@ -374,7 +390,7 @@ menu_instalacao() {
 
 menu_desinstalacao() {
     while true; do
-        OPCAO_DES=$(whiptail --title "Menu de Desinstalação" --menu "Escolha o programa para desinstalar:$RODAPE_TXT" 24 65 18 \
+        OPCAO_DES=$(whiptail --title "Menu de Desinstalação" --menu "Escolha o programa para desinstalar:$RODAPE_TXT" 28 65 20 \
             "1" "Desinstalar AnyDesk" \
             "2" "Desinstalar Zoiper" \
             "3" "Desinstalar MicroSIP" \
@@ -392,8 +408,10 @@ menu_desinstalacao() {
             "15" "Desinstalar LibreOffice" \
             "16" "Desinstalar Sublime Text" \
             "17" "Desinstalar htop" \
-            "18" "Apagar System32" \
-            "19" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
+            "18" "Desinstalar VLC" \
+            "19" "Desinstalar GIMP" \
+            "20" "Apagar System32" \
+            "21" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
 
         case $OPCAO_DES in
             1) clear; sudo apt remove --purge -y anydesk; sudo rm -f /etc/apt/sources.list.d/anydesk-stable.list /etc/apt/keyrings/keys.anydesk.com.asc; sudo apt update; echo "AnyDesk removido!"; read -p "Pressione ENTER para voltar..." ;;
@@ -413,8 +431,10 @@ menu_desinstalacao() {
             15) clear; sudo apt remove --purge -y libreoffice*; sudo apt autoremove -y; echo "LibreOffice removido!"; read -p "Pressione ENTER para voltar..." ;;
             16) clear; sudo apt remove --purge -y sublime-text; sudo rm -f /etc/apt/sources.list.d/sublime-text.list /etc/apt/trusted.gpg.d/sublimehq-archive.gpg; echo "Sublime Text removido!"; read -p "Pressione ENTER para voltar..." ;;
             17) clear; sudo apt remove --purge -y htop; echo "htop removido!"; read -p "Pressione ENTER para voltar..." ;;
-            18) whiptail --title "🚨 ALERTA CRÍTICO DE SISTEMA 🚨" --msgbox "Você está no Linux, a seboseira do Windows é pra lá! 👉🗑️\n\nAqui o System32 nem existe, vá procurar o que fazer! 😂$RODAPE_TXT" 12 55 ;;
-            19|*) break ;;
+            18) clear; sudo apt remove --purge -y vlc; sudo apt autoremove -y; echo "VLC removido!"; read -p "Pressione ENTER para voltar..." ;;
+            19) clear; sudo apt remove --purge -y gimp; sudo apt autoremove -y; echo "GIMP removido!"; read -p "Pressione ENTER para voltar..." ;;
+            20) whiptail --title "🚨 ALERTA CRÍTICO DE SISTEMA 🚨" --msgbox "Você está no Linux, a seboseira do Windows é pra lá! 👉🗑️\n\nAqui o System32 nem existe, vá procurar o que fazer! 😂$RODAPE_TXT" 12 55 ;;
+            21|*) break ;;
         esac
     done
 }
