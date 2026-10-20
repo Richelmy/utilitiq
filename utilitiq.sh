@@ -143,11 +143,11 @@ instalar_flameshot() {
     
     echo "Definindo Flameshot como atalho padrão de captura de tela (PrtScn)..."
     if [ -n "$REAL_USER" ]; then
-        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys screenshot '[]' 2>/dev/null
-        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Flameshot' 2>/dev/null
-        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'flameshot gui' 2>/dev/null
-        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding 'Print' 2>/dev/null
-        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']" 2>/dev/null
+        sudo -u "$REAL_USER" gsettings set org.gnome.shell.keybindings show-screenshot-ui '[]' 2>/dev/null
+        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/flameshot/']" 2>/dev/null
+        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/flameshot/ name 'Flameshot' 2>/dev/null
+        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/flameshot/ command 'flameshot gui' 2>/dev/null
+        sudo -u "$REAL_USER" gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/flameshot/ binding 'Print' 2>/dev/null
     fi
     echo "Flameshot instalado e configurado como ferramenta padrão!"
 }
@@ -417,7 +417,7 @@ menu_desinstalacao() {
             1) clear; sudo apt remove --purge -y anydesk; sudo rm -f /etc/apt/sources.list.d/anydesk-stable.list /etc/apt/keyrings/keys.anydesk.com.asc; sudo apt update; echo "AnyDesk removido!"; read -p "Pressione ENTER para voltar..." ;;
             2) clear; sudo apt remove --purge -y zoiper5 zoiper; echo "Zoiper removido!"; read -p "Pressione ENTER para voltar..." ;;
             3) clear; rm -f /tmp/microsip.exe /tmp/microsip_portable.zip; rm -rf "$USER_HOME/.microsip" "$USER_HOME/.wine/drive_c/Program Files/MicroSIP"; echo "MicroSIP removido!"; read -p "Pressione ENTER para voltar..." ;;
-            4) clear; sudo apt remove --purge -y flameshot; echo "Flameshot removido!"; read -p "Pressione ENTER para voltar..." ;;
+            4) clear; sudo apt remove --purge -y flameshot; if [ -n "$REAL_USER" ]; then sudo -u "$REAL_USER" gsettings reset org.gnome.shell.keybindings show-screenshot-ui 2>/dev/null; sudo -u "$REAL_USER" gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings 2>/dev/null; fi; echo "Flameshot removido e atalhos restaurados!"; read -p "Pressione ENTER para voltar..." ;;
             5) clear; sudo apt remove --purge -y brave-browser; sudo rm -f /etc/apt/sources.list.d/brave-browser-release.list /usr/share/keyrings/brave-browser-archive-keyring.gpg; echo "Brave removido!"; read -p "Pressione ENTER para voltar..." ;;
             6) clear; sudo apt remove --purge -y firefox; echo "Firefox removido!"; read -p "Pressione ENTER para voltar..." ;;
             7) clear; sudo apt remove --purge -y torbrowser-launcher; rm -rf "$USER_HOME/.local/share/torbrowser"; echo "Tor Browser removido!"; read -p "Pressione ENTER para voltar..." ;;
