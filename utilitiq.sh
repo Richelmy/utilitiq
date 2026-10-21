@@ -272,6 +272,96 @@ instalar_gimp() {
     sudo apt update && sudo apt install -y gimp
 }
 
+instalar_ohmyzsh() {
+    if command -v starship &> /dev/null || [ -f "/usr/local/bin/starship" ]; then
+        whiptail --title "Conflito de Terminais" --msgbox "O Starship já está instalado no sistema.\n\nPor favor, desinstale-o primeiro no Menu de Desinstalação antes de instalar o Oh My Zsh.$RODAPE_TXT" 12 60
+        return
+    fi
+
+    clear
+    echo "Iniciando a instalação do Zsh e Oh My Zsh..."
+    sudo apt update && sudo apt install -y zsh curl git
+    
+    if [ ! -d "$USER_HOME/.oh-my-zsh" ]; then
+        echo "Instalando o Oh My Zsh para o usuário $REAL_USER..."
+        sudo -u "$REAL_USER" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        sudo chsh -s $(which zsh) "$REAL_USER"
+        echo "Oh My Zsh instalado com sucesso! A mudança para o Zsh pode requerer um logout/login para aplicar 100%."
+    else
+        echo "Oh My Zsh já parece estar instalado no diretório do usuário."
+    fi
+}
+
+instalar_starship() {
+    if [ -d "$USER_HOME/.oh-my-zsh" ]; then
+        whiptail --title "Conflito de Terminais" --msgbox "O Oh My Zsh já está instalado no sistema.\n\nPor favor, desinstale-o primeiro no Menu de Desinstalação antes de instalar o Starship.$RODAPE_TXT" 12 60
+        return
+    fi
+
+    clear
+    echo "Iniciando a instalação do Starship..."
+    sudo apt update && sudo apt install -y curl
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    
+    # Adicionando no .bashrc se existir
+    if [ -f "$USER_HOME/.bashrc" ]; then
+        if ! grep -q 'starship init bash' "$USER_HOME/.bashrc"; then
+            echo -e "\n# Starship Prompt\neval \"\$(starship init bash)\"" >> "$USER_HOME/.bashrc"
+        fi
+    fi
+    
+    # Adicionando no .zshrc se existir
+    if [ -f "$USER_HOME/.zshrc" ]; then
+        if ! grep -q 'starship init zsh' "$USER_HOME/.zshrc"; then
+            echo -e "\n# Starship Prompt\neval \"\$(starship init zsh)\"" >> "$USER_HOME/.zshrc"
+        fi
+    fi
+    
+    chown "$REAL_USER":"$REAL_USER" "$USER_HOME/.bashrc" "$USER_HOME/.zshrc" 2>/dev/null
+    
+    echo "Starship instalado com sucesso!"
+}
+
+desinstalar_tudo() {
+    if whiptail --title "⚠️ ATENÇÃO - DESINSTALAR TUDO ⚠️" --yesno "Esta opção vai desinstalar TODOS os programas que este script contempla (AnyDesk, Navegadores, Terminais, Extras, etc).\n\nTem certeza absoluta que deseja continuar?$RODAPE_TXT" 12 65; then
+        clear
+        echo "Iniciando a remoção de todos os programas..."
+        
+        sudo apt remove --purge -y anydesk zoiper5 zoiper flameshot brave-browser firefox torbrowser-launcher google-chrome-stable code discord libreoffice* sublime-text htop vlc gimp zsh
+        
+        sudo snap remove postman spotify deezer-desktop unofficial-deezer 2>/dev/null
+        
+        # Limpezas extras (repositórios, arquivos de config, wine)
+        sudo rm -f /etc/apt/sources.list.d/anydesk-stable.list /etc/apt/keyrings/keys.anydesk.com.asc
+        rm -f /tmp/microsip.exe /tmp/microsip_portable.zip
+        rm -rf "$USER_HOME/.microsip" "$USER_HOME/.wine/drive_c/Program Files/MicroSIP"
+        
+        if [ -n "$REAL_USER" ]; then
+            sudo -u "$REAL_USER" gsettings reset org.gnome.shell.keybindings show-screenshot-ui 2>/dev/null
+            sudo -u "$REAL_USER" gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings 2>/dev/null
+        fi
+
+        sudo rm -f /etc/apt/sources.list.d/brave-browser-release.list /usr/share/keyrings/brave-browser-archive-keyring.gpg
+        rm -rf "$USER_HOME/.local/share/torbrowser"
+        sudo rm -f /etc/apt/sources.list.d/vscode.list /etc/apt/keyrings/packages.microsoft.gpg
+        rm -rf "$USER_HOME/.wine/drive_c/Program Files/iTunes" "$USER_HOME/.wine/drive_c/Program Files (x86)/iTunes"
+        sudo rm -f /etc/apt/sources.list.d/sublime-text.list /etc/apt/trusted.gpg.d/sublimehq-archive.gpg
+        
+        # Limpeza terminais
+        sudo -u "$REAL_USER" rm -rf "$USER_HOME/.oh-my-zsh" "$USER_HOME/.zshrc" "$USER_HOME/.zsh_history"
+        sudo chsh -s $(which bash) "$REAL_USER" 2>/dev/null
+        sudo rm -f /usr/local/bin/starship
+        sudo sed -i '/starship init/d' "$USER_HOME/.bashrc" 2>/dev/null
+        sudo sed -i '/starship init/d' "$USER_HOME/.zshrc" 2>/dev/null
+
+        sudo apt autoremove -y
+        sudo apt update
+        
+        echo "Desinstalação em massa concluída."
+        whiptail --title "Concluído" --msgbox "Todos os programas suportados pelo script foram desinstalados com sucesso!$RODAPE_TXT" 10 60
+    fi
+}
+
 menu_padrao_manual() {
     while true; do
         OPCAO_MANUAL=$(whiptail --title "Programas Padrão - Manual" --menu "Escolha o programa para instalar:$RODAPE_TXT" 18 60 5 \
@@ -371,26 +461,43 @@ menu_extras() {
     done
 }
 
+menu_terminais() {
+    while true; do
+        OPCAO_TERM=$(whiptail --title "Instalar Terminais" --menu "Escolha o que instalar:$RODAPE_TXT" 18 60 3 \
+            "1" "Oh My Zsh" \
+            "2" "Starship" \
+            "3" "Voltar" 3>&1 1>&2 2>&3)
+
+        case $OPCAO_TERM in
+            1) instalar_ohmyzsh; read -p "Pressione ENTER para voltar..." ;;
+            2) instalar_starship; read -p "Pressione ENTER para voltar..." ;;
+            3|*) break ;;
+        esac
+    done
+}
+
 menu_instalacao() {
     while true; do
-        OPCAO_INST=$(whiptail --title "Menu de Instalação" --menu "Escolha a categoria:$RODAPE_TXT" 18 60 4 \
+        OPCAO_INST=$(whiptail --title "Menu de Instalação" --menu "Escolha a categoria:$RODAPE_TXT" 18 60 5 \
             "1" "Programas Padrão" \
             "2" "Navegadores" \
             "3" "Extras" \
-            "4" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
+            "4" "Terminais" \
+            "5" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
 
         case $OPCAO_INST in
             1) menu_programas_padrao ;;
             2) menu_navegadores ;;
             3) menu_extras ;;
-            4|*) break ;;
+            4) menu_terminais ;;
+            5|*) break ;;
         esac
     done
 }
 
 menu_desinstalacao() {
     while true; do
-        OPCAO_DES=$(whiptail --title "Menu de Desinstalação" --menu "Escolha o programa para desinstalar:$RODAPE_TXT" 28 65 20 \
+        OPCAO_DES=$(whiptail --title "Menu de Desinstalação" --menu "Escolha o programa para desinstalar:$RODAPE_TXT" 28 65 24 \
             "1" "Desinstalar AnyDesk" \
             "2" "Desinstalar Zoiper" \
             "3" "Desinstalar MicroSIP" \
@@ -410,8 +517,11 @@ menu_desinstalacao() {
             "17" "Desinstalar htop" \
             "18" "Desinstalar VLC" \
             "19" "Desinstalar GIMP" \
-            "20" "Apagar System32" \
-            "21" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
+            "20" "Desinstalar Oh My Zsh" \
+            "21" "Desinstalar Starship" \
+            "22" "Desinstalar TODOS os Programas" \
+            "23" "Apagar System32" \
+            "24" "Voltar ao Menu Principal" 3>&1 1>&2 2>&3)
 
         case $OPCAO_DES in
             1) clear; sudo apt remove --purge -y anydesk; sudo rm -f /etc/apt/sources.list.d/anydesk-stable.list /etc/apt/keyrings/keys.anydesk.com.asc; sudo apt update; echo "AnyDesk removido!"; read -p "Pressione ENTER para voltar..." ;;
@@ -433,8 +543,11 @@ menu_desinstalacao() {
             17) clear; sudo apt remove --purge -y htop; echo "htop removido!"; read -p "Pressione ENTER para voltar..." ;;
             18) clear; sudo apt remove --purge -y vlc; sudo apt autoremove -y; echo "VLC removido!"; read -p "Pressione ENTER para voltar..." ;;
             19) clear; sudo apt remove --purge -y gimp; sudo apt autoremove -y; echo "GIMP removido!"; read -p "Pressione ENTER para voltar..." ;;
-            20) whiptail --title "🚨 ALERTA CRÍTICO DE SISTEMA 🚨" --msgbox "Você está no Linux, a seboseira do Windows é pra lá! 👉🗑️\n\nAqui o System32 nem existe, vá procurar o que fazer! 😂$RODAPE_TXT" 12 55 ;;
-            21|*) break ;;
+            20) clear; sudo -u "$REAL_USER" rm -rf "$USER_HOME/.oh-my-zsh" "$USER_HOME/.zshrc" "$USER_HOME/.zsh_history"; sudo chsh -s $(which bash) "$REAL_USER"; sudo apt remove --purge -y zsh; echo "Zsh e Oh My Zsh removidos!"; read -p "Pressione ENTER para voltar..." ;;
+            21) clear; sudo rm -f /usr/local/bin/starship; sudo sed -i '/starship init/d' "$USER_HOME/.bashrc" 2>/dev/null; sudo sed -i '/starship init/d' "$USER_HOME/.zshrc" 2>/dev/null; echo "Starship removido!"; read -p "Pressione ENTER para voltar..." ;;
+            22) desinstalar_tudo; read -p "Pressione ENTER para voltar..." ;;
+            23) whiptail --title "🚨 ALERTA CRÍTICO DE SISTEMA 🚨" --msgbox "A seboseira do Windows é pra lá! 👉🗑️\n\nAqui o System32 nem existe 😂$RODAPE_TXT" 12 55 ;;
+            24|*) break ;;
         esac
     done
 }
